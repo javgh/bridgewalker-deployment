@@ -1,0 +1,11 @@
+Install haproxy
+  configuration in /etc/haproxy/haproxy.cfg
+  needs to be enabled in /etc/default/haproxy
+  configure rsyslogd for UDP logging: /etc/rsyslog.d/haproxy.conf
+
+Install supervisor
+  configuration in /etc/supervisor/conf.d/bridgewalker.conf
+  reload with:
+    # supervisorctl
+    reload
+    status
