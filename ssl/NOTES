@@ -1,0 +1,2 @@
+openssl rsa -in bridgewalker_encrypted.key -out bridgewalker.key
+cat bridgewalker.crt sub.class1.server.ca.pem ca.pem > bridgewalker-unified.crt

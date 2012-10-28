@@ -1,3 +1,5 @@
+Upgrade to wheezy (currently 'testing')
+
 Install haproxy
   configuration in /etc/haproxy/haproxy.cfg
   needs to be enabled in /etc/default/haproxy
