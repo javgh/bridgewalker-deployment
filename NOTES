@@ -5,8 +5,43 @@ Install haproxy
   needs to be enabled in /etc/default/haproxy
   configure rsyslogd for UDP logging: /etc/rsyslog.d/haproxy.conf
 
+Install MtGoxCachingProxy
+  required packages:
+    openjdk-7-jre
+
+Install bitcoind
+  configuration in /home/jan/.bitcoin/bitcoin.conf :
+    server=1
+    rpcuser=...
+    rpcpassword=...
+  required packages:
+    libboost-system1.49.0
+    libboost-filesystem1.49.0
+    libboost-program-options1.49.0
+    libboost-thread1.49.0
+    libdb5.1++
+
+Install pidnotifier
+  as /home/jan/.bitcoin/pidnotifier
+
+Install PostgresSQL
+  packages: postgresql, sudo
+  create Bridgewalker database:
+    sudo -u postgres bash
+    createuser jan
+    createdb -O jan bridgewalker
+
+Install bridgewalker
+  compile binary, make sure snap-server is compiled with SSL:
+    cabal install snap-server -fopenssl
+  upload binary + folders (log/, static/, snaplets/)
+  configuration in /home/jan/.bridgewalker/
+  compile CreateDB tool:
+    ghc -main-is Tools.CreateDB --make Tools/CreateDB.hs
+  use CreateDB to initialize tables
+
 Install supervisor
-  configuration in /etc/supervisor/conf.d/bridgewalker.conf
+  configuration in /etc/supervisor/conf.d/{bridgewalker, ...}.conf
   reload with:
     # supervisorctl
     reload
