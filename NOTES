@@ -46,3 +46,37 @@ Install supervisor
     # supervisorctl
     reload
     status
+
+Configure backup
+  create bwbackup user on backup server
+  allow root to log into backup server
+    ssh-keygen -t dsa
+    ssh-copy-id bwbackup@bitcoinmonitor.com
+
+  install backupninja
+    edit /etc/backupninja.conf
+    create /var/backups/backupninja
+    create /var/backups/backupninja/bitcoind
+    chown jan:jan /var/backups/backupninja/bitcoind
+    create /etc/backup.d/10-bitcoind.sh; restrict permissions
+    create /etc/backup.d/20-postgresql.pgsql
+    create /etc/backup.d/90-off-site.dup
+      insert password
+    test with 'backupninja -t'
+
+  install postfix
+    during configuration:
+      Satellite system
+      System mail name: bridgewalkerapp.com
+      SMTP relay host: [smtp.gmail.com]:587
+    add additional options for gmail relayhost
+      smtp_use_tls=yes
+      smtp_sasl_auth_enable = yes
+      smtp_sasl_password_maps = hash:/etc/postfix/sasl_passwd
+      smtp_tls_CAfile = /etc/ssl/certs/ca-certificates.crt
+      smtp_sasl_security_options =
+    create /etc/postfix/sasl_passwd
+      [smtp.gmail.com]:587  user@gmail.com:password
+    postmap /etc/postfix/sasl_passwd
+    restrict permissions; chown postfix:postfix sasl_passwd*
+    log into GMail and dismiss triggered warnings
