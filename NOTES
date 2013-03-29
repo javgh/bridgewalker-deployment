@@ -1,10 +1,5 @@
 Upgrade to wheezy (currently 'testing')
 
-Install haproxy
-  configuration in /etc/haproxy/haproxy.cfg
-  needs to be enabled in /etc/default/haproxy
-  configure rsyslogd for UDP logging: /etc/rsyslog.d/haproxy.conf
-
 Install MtGoxCachingProxy
   required packages:
     openjdk-7-jre
@@ -39,6 +34,21 @@ Install bridgewalker
   compile CreateDB tool:
     ghc -main-is Tools.CreateDB --make Tools/CreateDB.hs
   use CreateDB to initialize tables
+
+Install nginx
+  requires Websocket support in Nginx (since 1.3.13)
+  if not available as package, compile on development machine:
+    ./configure --with-http_ssl_module --prefix=/opt/nginx && make
+  create tarball from directory and upload to server (timestamps need to be in
+    correct order so that 'make' is not confused)
+  install package 'make', do 'make install' as root
+  create /opt/nginx/pid
+  create /opt/nginx/conf/certs
+    copy bridgewalker-unified.crt and bridgewalker.key there
+  configuration in /opt/nginx/conf/nginx.conf
+  edit /etc/rc.local and add (before 'exit 0') this line:
+    /opt/nginx/sbin/nginx
+  configuration for logrotate in /etc/logrotate.d/optnginx
 
 Install supervisor
   configuration in /etc/supervisor/conf.d/{bridgewalker, ...}.conf
@@ -80,3 +90,9 @@ Configure backup
     postmap /etc/postfix/sasl_passwd
     restrict permissions; chown postfix:postfix sasl_passwd*
     log into GMail and dismiss triggered warnings
+
+#graveyard
+Install haproxy
+  configuration in /etc/haproxy/haproxy.cfg
+  needs to be enabled in /etc/default/haproxy
+  configure rsyslogd for UDP logging: /etc/rsyslog.d/haproxy.conf
