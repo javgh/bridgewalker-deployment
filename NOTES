@@ -57,6 +57,61 @@ Install supervisor
     reload
     status
 
+Install metricsd
+  download jar from https://github.com/mojodna/metricsd/downloads
+    and copy to /home/jan/metricsd
+  add supervisord configuration
+  add configuration file /etc/home/metricsd/config.json
+
+Configure graphite host
+  Install graphite-carbon
+    Debian package: graphite-carbon
+    configuration in /etc/carbon
+    activate in /etc/default/graphite-carbon
+    # service carbon-cache start
+
+  Install graphite-web
+    Debian packages: python-cairo, python-django, python-django-tagging, gunicorn,
+      apache2-utils
+    download from https://github.com/graphite-project/graphite-web/downloads
+      and unpack into /home/jan/graphite-web
+    create configuration /home/jan/graphite-web/webapp/graphite/local_settings.py
+    create folder /home/jan/graphite-web/storage and
+      /home/jan/graphite-web/storage/log/webapp
+    run in /home/jan/graphite-web: python webapp/graphite/manage.py syncdb
+      say yes to superuser creation
+      give name and email address; set random password (won't be used)
+    create graphite configuration in /etc/gunicorn.d/
+    add nginx site configuration in /etc/nginx/sites-available/
+        and link in /etc/nginx/sites-enabled
+      htpasswd -c /etc/nginx/graphite.htpasswd jan
+      chmod og-r /etc/nginx/graphite.htpasswd
+      chown www-data:www-data /etc/nginx/graphite.htpasswd
+    create self-signed certificate
+      cd /etc/nginx && mkdir certs
+        chown www-data:www-data certs
+        chmod og-rx certs
+      cd certs
+        openssl genrsa -des3 -out bw-graphite.key 1024
+          # use 'asdf' as pass phrase
+        openssl req -new -key bw-graphite.key -out bw-graphite.csr
+          Country Name: DE
+          Common Name: www.bitcoinmonitor.com
+          # enter '.' for most things to leave them blank;
+          # also no challenge password
+        openssl rsa -in bw-graphite.key -out bw-graphite.key.nopw
+        mv bw-graphite.key.nopw bw-graphite.key
+        openssl x509 -req -days 365 -in bw-graphite.csr \
+            -signkey bw-graphite.key -out bw-graphite.crt
+        chown www-data:www-data *
+        chmod og-r *
+
+  Configure firewall
+    iptables -I INPUT \! --src 78.47.45.36 -m tcp -p tcp --dport 2003 -j DROP
+        # only allow metrics from bridgewalkerapp.com
+    use iptables-save to save configuration as /etc/network/firewall.conf
+    add configuration file /etc/network/if-up.d/firewall
+
 Configure backup
   create bwbackup user on backup server
   allow root to log into backup server

@@ -1,0 +1,16 @@
+CONFIG = {
+    'mode': 'django',
+    'environment': {
+        'PYTHONPATH': '/home/jan/graphite-web/webapp',
+    },
+    'working_dir': '/',
+    'user': 'jan',
+    'group': 'jan',
+    'args': (
+        '--bind=127.0.0.1:8100',
+        '--workers=1',
+        # '--worker-class=egg:gunicorn#sync',
+        # '--timeout=30',
+        'graphite.settings',
+    ),
+}
