@@ -1,0 +1,8 @@
+[graphite]
+192.168.2.3
+
+[graphite:vars]
+graphite_web_version=0.9.10
+is_staging=yes
+
+# graphite-web: https://github.com/graphite-project/graphite-web/downloads

@@ -1,0 +1,8 @@
+# based on 'vagrant init'
+
+Vagrant::Config.run do |config|
+  config.vm.box = "debian_wheezy_32_with_user_jan"
+
+  config.vm.network :hostonly, "192.168.2.3"
+  config.vm.forward_port 80, 8080
+end

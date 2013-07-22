@@ -1,0 +1,108 @@
+---
+- hosts: graphite
+  user: jan
+  gather_facts: no
+  vars:
+    home: /home/jan
+  tasks:
+  - name: install additional Ansible dependencies
+    command: /usr/bin/aptitude -y install python-apt
+                creates=/usr/share/doc/python-apt
+    sudo: yes
+
+  - name: install Debian packages
+    apt: pkg=$item state=present
+    with_items:
+      - screen
+      - htop
+      - graphite-carbon
+      - python-cairo
+      - python-django
+      - python-django-tagging
+      - gunicorn
+      - apache2-utils
+    sudo: yes
+
+  - name: configure graphite-carbon (carbon.conf)
+    copy: src=files/etc/carbon/carbon.conf
+          dest=/etc/carbon/carbon.conf
+          owner=root
+          group=root
+    sudo: yes
+
+  - name: configure graphite-carbon (storage-schemas.conf)
+    copy: src=files/etc/carbon/storage-schemas.conf
+          dest=/etc/carbon/storage-schemas.conf
+          owner=root
+          group=root
+    sudo: yes
+
+  - name: activate graphite-carbon
+    copy: src=files/etc/default/graphite-carbon
+          dest=/etc/default/graphite-carbon
+          owner=root
+          group=root
+    sudo: yes
+
+  - name: start grahite-carbon (service carbon-cache)
+    service: name=carbon-cache state=started
+    sudo: yes
+
+  - name: download grahite-web
+    command: /usr/bin/wget https://github.com/downloads/graphite-project/graphite-web/graphite-web-$graphite_web_version.tar.gz
+                creates=$home/graphite-web-$graphite_web_version.tar.gz
+
+  - name: extract graphite-web
+    command: /bin/tar xzf graphite-web-$graphite_web_version.tar.gz
+                creates=$home/graphite-web-$graphite_web_version
+
+  - name: create link to active graphite-web version
+    file: src=$home/graphite-web-$graphite_web_version
+          dest=$home/graphite-web
+          state=link
+
+  - name: add local_settings.py for graphite-web
+    copy: src=files/home/jan/graphite-web/webapp/graphite/local_settings.py
+          dest=/home/jan/graphite-web/webapp/graphite/local_settings.py
+
+  - name: create necessary folders for graphite-web (storage/)
+    file: path=$home/graphite-web/storage
+          state=directory
+
+  - name: create necessary folders for graphite-web (storage/log)
+    file: path=$home/graphite-web/storage/log
+          state=directory
+
+  - name: create necessary folders for graphite-web (storage/log/webapp)
+    file: path=$home/graphite-web/storage/log/webapp
+          state=directory
+
+  - name: prepare database for graphite-web
+    command: /usr/bin/python manage.py syncdb --noinput
+             chdir=$home/graphite-web/webapp/graphite
+             creates=$home/graphite-web/storage/graphite.db
+
+  - name: configure gunicorn to serve graphite-web
+    copy: src=files/etc/gunicorn.d/graphite
+          dest=/etc/gunicorn.d/graphite
+          owner=root
+          group=root
+    sudo: yes
+    notify: restart gunicorn
+
+  handlers:
+  - name: update supervisor
+    command: /usr/bin/supervisorctl update
+    sudo: yes
+
+  - name: restart nginx
+    service: name=nginx state=restarted
+    sudo: yes
+
+  - name: restart gunicorn
+    service: name=gunicorn state=restarted
+    sudo: yes
+
+  - name: activate firewall
+    command: /etc/network/if-up.d/firewall
+    sudo: yes
