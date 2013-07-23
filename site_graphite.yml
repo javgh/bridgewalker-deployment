@@ -145,6 +145,41 @@
     sudo: yes
     notify: restart nginx
 
+  - name: prepare iptables configuration framework (folders)
+    file: path=$item
+          state=directory
+    with_items:
+      - /etc/iptables
+      - /etc/iptables/rules.d
+    sudo: yes
+
+  - name: prepare iptables configuration framework (header & footer)
+    copy: src=files/$item
+          dest=$item
+          owner=root
+          group=root
+    with_items:
+      - /etc/iptables/rules.d/00-header
+      - /etc/iptables/rules.d/99-footer
+    sudo: yes
+    notify: refresh iptables configuration
+
+  - name: load iptables configuration at boot
+    copy: src=files/etc/network/if-up.d/iptables
+          dest=/etc/network/if-up.d/iptables
+          owner=root
+          group=root
+          mode=755
+    sudo: yes
+
+  - name: add iptables rule to only allow a whitelisted host to push metrics
+    template: src=files/etc/iptables/rules.d/10-whitelist_metricsd.j2
+              dest=/etc/iptables/rules.d/10-whitelist_metricsd
+              owner=root
+              group=root
+    sudo: yes
+    notify: refresh iptables configuration
+
   handlers:
   - name: update supervisor
     command: /usr/bin/supervisorctl update
@@ -158,6 +193,11 @@
     service: name=gunicorn state=restarted
     sudo: yes
 
-  - name: activate firewall
-    command: /etc/network/if-up.d/firewall
+  - name: refresh iptables configuration
+    shell: cat /etc/iptables/rules.d/* > /etc/iptables/iptables.conf
+    sudo: yes
+    notify: reload iptables configuration
+
+  - name: reload iptables configuration
+    command: /etc/network/if-up.d/iptables
     sudo: yes
