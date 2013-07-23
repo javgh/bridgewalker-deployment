@@ -19,6 +19,7 @@
       - python-cairo
       - python-django
       - python-django-tagging
+      - sqlite3
       - gunicorn
       - apache2-utils
       - nginx
@@ -64,7 +65,7 @@
 
   - name: add local_settings.py for graphite-web
     copy: src=files/home/jan/graphite-web/webapp/graphite/local_settings.py
-          dest=/home/jan/graphite-web/webapp/graphite/local_settings.py
+          dest=$home/graphite-web/webapp/graphite/local_settings.py
 
   - name: create necessary folders for graphite-web
     file: path=$item
@@ -78,6 +79,11 @@
     command: /usr/bin/python manage.py syncdb --noinput
              chdir=$home/graphite-web/webapp/graphite
              creates=$home/graphite-web/storage/graphite.db
+
+  - name: add dashboard configuration
+    copy: src=files/home/jan/graphite-web/storage/dashboard_backup.sql
+          dest=$home/graphite-web/storage/dashboard_backup.sql
+    notify: import dashboard configuration
 
   - name: configure gunicorn to serve graphite
     copy: src=files/etc/gunicorn.d/graphite
@@ -228,3 +234,7 @@
   - name: reload iptables configuration
     command: /etc/network/if-up.d/iptables
     sudo: yes
+
+  - name: import dashboard configuration
+    shell: /usr/bin/sqlite3 $home/graphite-web/storage/graphite.db
+            < $home/graphite-web/storage/dashboard_backup.sql
