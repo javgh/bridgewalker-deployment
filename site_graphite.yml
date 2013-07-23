@@ -21,6 +21,7 @@
       - python-django-tagging
       - gunicorn
       - apache2-utils
+      - nginx
     sudo: yes
 
   - name: configure graphite-carbon (carbon.conf)
@@ -65,30 +66,84 @@
     copy: src=files/home/jan/graphite-web/webapp/graphite/local_settings.py
           dest=/home/jan/graphite-web/webapp/graphite/local_settings.py
 
-  - name: create necessary folders for graphite-web (storage/)
-    file: path=$home/graphite-web/storage
+  - name: create necessary folders for graphite-web
+    file: path=$item
           state=directory
-
-  - name: create necessary folders for graphite-web (storage/log)
-    file: path=$home/graphite-web/storage/log
-          state=directory
-
-  - name: create necessary folders for graphite-web (storage/log/webapp)
-    file: path=$home/graphite-web/storage/log/webapp
-          state=directory
+    with_items:
+      - $home/graphite-web/storage
+      - $home/graphite-web/storage/log
+      - $home/graphite-web/storage/log/webapp
 
   - name: prepare database for graphite-web
     command: /usr/bin/python manage.py syncdb --noinput
              chdir=$home/graphite-web/webapp/graphite
              creates=$home/graphite-web/storage/graphite.db
 
-  - name: configure gunicorn to serve graphite-web
+  - name: configure gunicorn to serve graphite
     copy: src=files/etc/gunicorn.d/graphite
           dest=/etc/gunicorn.d/graphite
           owner=root
           group=root
     sudo: yes
     notify: restart gunicorn
+
+  - name: add nginx configuration for graphite
+    copy: src=files/etc/nginx/sites-available/graphite
+          dest=/etc/nginx/sites-available/graphite
+          owner=root
+          group=root
+    sudo: yes
+    notify: restart nginx
+
+  - name: add htpasswd for graphite
+    copy: src=files/etc/nginx/graphite.htpasswd
+          dest=/etc/nginx/graphite.htpasswd
+          owner=www-data
+          group=www-data
+          mode=600
+    sudo: yes
+    notify: restart nginx
+
+  - name: create certs folder for nginx
+    file: path=/etc/nginx/certs
+          state=directory
+          owner=www-data
+          group=www-data
+          mode=700
+    sudo: yes
+
+  - name: create self-signed SSL cert
+    command: openssl req -new -nodes -x509 -subj "/CN=${graphite_fqdn}"
+                -days 3650 -keyout /etc/nginx/certs/bw-graphite.key
+                -out /etc/nginx/certs/bw-graphite.crt -extensions v3_ca
+                creates=/etc/nginx/certs/bw-graphite.crt
+    sudo: yes
+    notify: restart nginx
+
+  - name: ensure that SSL cert is owned by www-data
+    file: path=$item
+          state=file
+          owner=www-data
+          group=www-data
+          mode=600
+    with_items:
+      - /etc/nginx/certs/bw-graphite.crt
+      - /etc/nginx/certs/bw-graphite.key
+    sudo: yes
+    notify: restart nginx
+
+  - name: disable default nginx configuration
+    file: path=/etc/nginx/sites-enabled/default
+          state=absent
+    sudo: yes
+    notify: restart nginx
+
+  - name: enable nginx configuration for graphite
+    file: src=/etc/nginx/sites-available/graphite
+          dest=/etc/nginx/sites-enabled/graphite
+          state=link
+    sudo: yes
+    notify: restart nginx
 
   handlers:
   - name: update supervisor
