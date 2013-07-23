@@ -1,0 +1,6 @@
+#!/bin/bash
+
+size=$(/usr/bin/du -b /home/bwbackup/backupninja/ | /usr/bin/cut -f1)
+timestamp=$(date +%s)
+msg="metrics.gauge.backup.size.count $size $timestamp"
+echo $msg | /bin/nc -w 1 127.0.0.1 2003

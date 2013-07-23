@@ -180,11 +180,38 @@
     sudo: yes
     notify: refresh iptables configuration
 
-  handlers:
-  - name: update supervisor
-    command: /usr/bin/supervisorctl update
+  - name: create user 'bwbackup' for backup purposes
+    action: user name=bwbackup shell=/bin/bash state=present
     sudo: yes
 
+  - name: allow login from backup tool on main host
+    authorized_key: user=bwbackup
+                    key="{{ lookup('file', 'files/home/bwbackup/ssl/authorized_key_0') }}"
+    sudo: yes
+
+  - name: create backup destination folder
+    file: path=/home/bwbackup/backupninja
+          state=directory
+          owner=bwbackup
+          group=bwbackup
+    sudo: yes
+
+  - name: add script to check backup size
+    copy: src=files/home/bwbackup/check-backup-size
+          dest=/home/bwbackup/check-backup-size
+          owner=bwbackup
+          group=bwbackup
+          mode=700
+    sudo: yes
+
+  - name: add crontab entry to check backup size a few times a day
+    cron: name="Check backup size"
+          hour="*/3"
+          job="/home/bwbackup/check-backup-size"
+          user=bwbackup
+    sudo: yes
+
+  handlers:
   - name: restart nginx
     service: name=nginx state=restarted
     sudo: yes
