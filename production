@@ -1,0 +1,10 @@
+[graphite]
+www.bitcoinmonitor.com
+
+[graphite:vars]
+graphite_web_version=0.9.10
+graphite_fqdn=www.bitcoinmonitor.com
+metricsd_host=78.47.45.36
+is_staging=yes
+
+# graphite-web: https://github.com/graphite-project/graphite-web/downloads
