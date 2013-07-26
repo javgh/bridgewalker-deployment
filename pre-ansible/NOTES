@@ -128,6 +128,8 @@ Configure backup
     create /etc/backup.d/90-off-site.dup
       insert password
     test with 'backupninja -t'
+    # uses duplicity, which seems to have a buggy SSH support in
+    # older versions; something like 0.6.21 is needed
 
   install postfix
     during configuration:
