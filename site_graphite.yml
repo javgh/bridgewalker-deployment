@@ -26,21 +26,21 @@
     sudo: yes
 
   - name: configure graphite-carbon (carbon.conf)
-    copy: src=files/etc/carbon/carbon.conf
+    copy: src=files_graphite/etc/carbon/carbon.conf
           dest=/etc/carbon/carbon.conf
           owner=root
           group=root
     sudo: yes
 
   - name: configure graphite-carbon (storage-schemas.conf)
-    copy: src=files/etc/carbon/storage-schemas.conf
+    copy: src=files_graphite/etc/carbon/storage-schemas.conf
           dest=/etc/carbon/storage-schemas.conf
           owner=root
           group=root
     sudo: yes
 
   - name: activate graphite-carbon
-    copy: src=files/etc/default/graphite-carbon
+    copy: src=files_graphite/etc/default/graphite-carbon
           dest=/etc/default/graphite-carbon
           owner=root
           group=root
@@ -64,7 +64,7 @@
           state=link
 
   - name: add local_settings.py for graphite-web
-    copy: src=files/home/jan/graphite-web/webapp/graphite/local_settings.py
+    copy: src=files_graphite/home/jan/graphite-web/webapp/graphite/local_settings.py
           dest=$home/graphite-web/webapp/graphite/local_settings.py
 
   - name: create necessary folders for graphite-web
@@ -81,12 +81,12 @@
              creates=$home/graphite-web/storage/graphite.db
 
   - name: add dashboard configuration
-    copy: src=files/home/jan/graphite-web/storage/dashboard_backup.sql
+    copy: src=files_graphite/home/jan/graphite-web/storage/dashboard_backup.sql
           dest=$home/graphite-web/storage/dashboard_backup.sql
     notify: import dashboard configuration
 
   - name: configure gunicorn to serve graphite
-    copy: src=files/etc/gunicorn.d/graphite
+    copy: src=files_graphite/etc/gunicorn.d/graphite
           dest=/etc/gunicorn.d/graphite
           owner=root
           group=root
@@ -94,7 +94,7 @@
     notify: restart gunicorn
 
   - name: add nginx configuration for graphite
-    copy: src=files/etc/nginx/sites-available/graphite
+    copy: src=files_graphite/etc/nginx/sites-available/graphite
           dest=/etc/nginx/sites-available/graphite
           owner=root
           group=root
@@ -102,7 +102,7 @@
     notify: restart nginx
 
   - name: add htpasswd for graphite
-    copy: src=files/etc/nginx/graphite.htpasswd
+    copy: src=files_graphite/etc/nginx/graphite.htpasswd
           dest=/etc/nginx/graphite.htpasswd
           owner=www-data
           group=www-data
@@ -160,7 +160,7 @@
     sudo: yes
 
   - name: prepare iptables configuration framework (header & footer)
-    copy: src=files/$item
+    copy: src=files_graphite/$item
           dest=$item
           owner=root
           group=root
@@ -171,7 +171,7 @@
     notify: refresh iptables configuration
 
   - name: load iptables configuration at boot
-    copy: src=files/etc/network/if-up.d/iptables
+    copy: src=files_graphite/etc/network/if-up.d/iptables
           dest=/etc/network/if-up.d/iptables
           owner=root
           group=root
@@ -179,7 +179,7 @@
     sudo: yes
 
   - name: add iptables rule to only allow a whitelisted host to push metrics
-    template: src=files/etc/iptables/rules.d/10-whitelist_metricsd.j2
+    template: src=files_graphite/etc/iptables/rules.d/10-whitelist_metricsd.j2
               dest=/etc/iptables/rules.d/10-whitelist_metricsd
               owner=root
               group=root
@@ -192,7 +192,7 @@
 
   - name: allow login from backup tool on main host
     authorized_key: user=bwbackup
-                    key="{{ lookup('file', 'files/home/bwbackup/ssl/authorized_key_0') }}"
+                    key="{{ lookup('file', 'files_graphite/home/bwbackup/ssl/authorized_key_0') }}"
     sudo: yes
 
   - name: create backup destination folder
@@ -203,7 +203,7 @@
     sudo: yes
 
   - name: add script to check backup size
-    copy: src=files/home/bwbackup/check-backup-size
+    copy: src=files_graphite/home/bwbackup/check-backup-size
           dest=/home/bwbackup/check-backup-size
           owner=bwbackup
           group=bwbackup
