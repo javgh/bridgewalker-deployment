@@ -17,6 +17,7 @@
       - htop
       - openjdk-6-jre-headless       # MtGoxCachingProxy seems to have
                                      # problems with Java 7
+      - supervisor
     sudo: yes
 
   - name: create folders for MtGoxCachingProxy
@@ -32,16 +33,45 @@
     with_items:
       - MtGoxCachingProxy.jar
       - lib/socketio.jar
+    notify: restart mtgoxcachingproxy
 
-#  - name: add supervisor configuration for MtGoxCachingProxy
-#    copy: src=files/etc/supervisor/conf.d/bitcoinmonitor.conf_staging
-#          dest=/etc/supervisor/conf.d/bitcoinmonitor.conf
-#          owner=root
-#          group=root
-#    sudo: yes
-#    notify: update supervisor
+  - name: add supervisor configuration for MtGoxCachingProxy
+    copy: src=files/etc/supervisor/conf.d/mtgoxcachingproxy.conf
+          dest=/etc/supervisor/conf.d/mtgoxcachingproxy.conf
+          owner=root
+          group=root
+    sudo: yes
+    notify: update supervisor
+
+  - name: create Bitcoin daemon configuration directory
+    file: path=$home/.bitcoin
+          state=directory
+
+  - name: install pidnotifier
+    copy: src=../../one-off/PidNotifier/PidNotifier
+          dest=$home/.bitcoin/pidnotifier
+
+  - name: add Debian backports repository
+    copy: src=files/etc/apt/sources.list.d/backports.list
+          dest=/etc/apt/sources.list.d/backports.list
+          owner=root
+          group=root
+    sudo: yes
+    notify: update aptitude
+
+  - name: install backported nginx  # need at least 1.3.13 for websocket support
+    apt: pkg=nginx default_release=wheezy-backports state=present
+    sudo: yes
 
   handlers:
   - name: update supervisor
     command: /usr/bin/supervisorctl update
+    sudo: yes
+
+  - name: restart mtgoxcachingproxy
+    command: /usr/bin/supervisorctl restart mtgoxcachingproxy
+    sudo: yes
+
+  - name: update aptitude
+    command: /usr/bin/aptitude update
     sudo: yes
