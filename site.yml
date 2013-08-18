@@ -1,0 +1,47 @@
+---
+- hosts: bridgewalker
+  user: jan
+  gather_facts: no
+  vars:
+    home: /home/jan
+  tasks:
+  - name: install additional Ansible dependencies
+    command: /usr/bin/aptitude -y install python-apt
+                creates=/usr/share/doc/python-apt
+    sudo: yes
+
+  - name: install Debian packages
+    apt: pkg=$item state=present
+    with_items:
+      - screen
+      - htop
+      - openjdk-6-jre-headless       # MtGoxCachingProxy seems to have
+                                     # problems with Java 7
+    sudo: yes
+
+  - name: create folders for MtGoxCachingProxy
+    file: path=$home/$item
+          state=directory
+    with_items:
+      - MtGoxCachingProxy
+      - MtGoxCachingProxy/lib
+
+  - name: install MtGoxCachingProxy
+    copy: src=../MtGoxCachingProxy/dist/$item
+          dest=$home/MtGoxCachingProxy/$item
+    with_items:
+      - MtGoxCachingProxy.jar
+      - lib/socketio.jar
+
+#  - name: add supervisor configuration for MtGoxCachingProxy
+#    copy: src=files/etc/supervisor/conf.d/bitcoinmonitor.conf_staging
+#          dest=/etc/supervisor/conf.d/bitcoinmonitor.conf
+#          owner=root
+#          group=root
+#    sudo: yes
+#    notify: update supervisor
+
+  handlers:
+  - name: update supervisor
+    command: /usr/bin/supervisorctl update
+    sudo: yes
