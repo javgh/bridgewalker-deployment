@@ -6,8 +6,7 @@ Vagrant::Config.run do |config|
   config.vm.network :hostonly, "192.168.2.2"
   config.vm.forward_port 80, 8080
 
-  config.vm.share_folder "bridgewalker", "/home/jan/bridgewalker",
-                            "../../bridgewalker",
+  config.vm.share_folder "src", "/home/jan/src", "../..",
                             :owner => "jan", :group => "jan",
                             :extra => 'dmode=755'
 end
