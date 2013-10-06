@@ -113,6 +113,15 @@
     notify: update supervisor
     when_set: $is_production
 
+  - name: add supervisor configuration for Bitcoin daemon (staging)
+    copy: src=files/etc/supervisor/conf.d/bitcoind.conf_staging
+          dest=/etc/supervisor/conf.d/bitcoind.conf
+          owner=root
+          group=root
+    sudo: yes
+    notify: update supervisor
+    when_set: $is_staging
+
   - name: install pidnotifier
     copy: src=../../one-off/PidNotifier/PidNotifier
           dest=$home/.bitcoin/pidnotifier
