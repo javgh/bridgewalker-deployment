@@ -192,7 +192,7 @@
 
   - name: allow login from backup tool on main host
     authorized_key: user=bwbackup
-                    key="{{ lookup('file', 'files_graphite/home/bwbackup/ssl/authorized_key_0') }}"
+                    key="{{ lookup('file', 'files/root/ssh/id_dsa.pub') }}"
     sudo: yes
 
   - name: create backup destination folder

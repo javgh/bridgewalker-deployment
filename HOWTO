@@ -1,0 +1,12 @@
+Test in staging environment
+  cd vagrant; vagrant up
+  ssh 192.168.2.2
+
+Deploy to production environment
+  ssh-add credentials/id_rsa
+  ansible-playbook -i production site.yml
+
+Manual actions required on first deployment
+  Decryption of sensitive files (will be prompted)
+  Performing initial ssh login to bwbackup@<backuphost> as user root
+  Running './bridgewalker --initdb' to initialize the database

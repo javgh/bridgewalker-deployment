@@ -1,0 +1,1 @@
+gpg -d id_dsa.gpg > id_dsa
