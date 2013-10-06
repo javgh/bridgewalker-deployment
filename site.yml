@@ -21,6 +21,11 @@
       - postgresql
       - python-psycopg2
       - haskell-platform
+      - libboost-system1.49.0               # \
+      - libboost-filesystem1.49.0           # > for Bitcoin daemon
+      - libboost-program-options1.49.0      # |
+      - libboost-thread1.49.0               # |
+      - libdb5.1++                          # /
     sudo: yes
 
   - name: install Haskell development packages
@@ -51,14 +56,14 @@
     sudo: yes
     when_set: $is_staging
 
-#  - name: install additional Haskell development packages via Cabal
-#    shell: #cabal update;
-#           cd /home/jan/src/watchdog; cabal install;
-#           cd /home/jan/src/bitcoin-rpc2; cabal install;
-#           cd /home/jan/src/mtgoxapi; cabal install;
-#           cd /home/jan/src/metricsd-client; cabal install;
-#           cd /home/jan/src/bridgewalker; cabal install;
-#    when_set: $is_staging
+  - name: install additional Haskell development packages via Cabal
+    shell: cabal update;
+           cd /home/jan/src/watchdog; cabal install;
+           cd /home/jan/src/bitcoin-rpc2; cabal install;
+           cd /home/jan/src/mtgoxapi; cabal install;
+           cd /home/jan/src/metricsd-client; cabal install;
+           cd /home/jan/src/bridgewalker; cabal install;
+    when: update_cabal == "yes"
 
   - name: create link to Bridgewalker source code
     file: src=$home/src/bridgewalker
@@ -66,19 +71,13 @@
           state=link
     when_set: $is_staging
 
-  - name: create folders for MtGoxCachingProxy
-    file: path=$home/$item
+  - name: create folder for MtGoxCachingProxy
+    file: path=$home/MtGoxCachingProxy
           state=directory
-    with_items:
-      - MtGoxCachingProxy
-      - MtGoxCachingProxy/lib
 
   - name: install MtGoxCachingProxy
-    copy: src=../MtGoxCachingProxy/dist/$item
-          dest=$home/MtGoxCachingProxy/$item
-    with_items:
-      - MtGoxCachingProxy.jar
-      - lib/socketio.jar
+    copy: src=../MtGoxCachingProxy/dist/MtGoxCachingProxy.jar
+          dest=$home/MtGoxCachingProxy/MtGoxCachingProxy.jar
     notify: restart mtgoxcachingproxy
 
   - name: add supervisor configuration for MtGoxCachingProxy
@@ -92,6 +91,27 @@
   - name: create Bitcoin daemon configuration directory
     file: path=$home/.bitcoin
           state=directory
+
+  - name: configure Bitcoin daemon
+    copy: src=files/home/jan/bitcoin/bitcoin.conf
+          dest=$home/.bitcoin/bitcoin.conf
+
+  - name: create folder for Bitcoin daemon
+    file: path=$home/bitcoind
+          state=directory
+
+  - name: install custom Bitcoin daemon
+    copy: src=../../../../repos/bitcoin-bw-production/src/bitcoind
+          dest=$home/bitcoind/bitcoind
+
+  - name: add supervisor configuration for Bitcoin daemon
+    copy: src=files/etc/supervisor/conf.d/bitcoind.conf
+          dest=/etc/supervisor/conf.d/bitcoind.conf
+          owner=root
+          group=root
+    sudo: yes
+    notify: update supervisor
+    when_set: $is_production
 
   - name: install pidnotifier
     copy: src=../../one-off/PidNotifier/PidNotifier
@@ -110,6 +130,95 @@
     apt: pkg=nginx default_release=wheezy-backports state=present
     sudo: yes
 
+  - name: add nginx configuration for bridgewalker
+    copy: src=files/etc/nginx/sites-available/bridgewalker
+          dest=/etc/nginx/sites-available/bridgewalker
+          owner=root
+          group=root
+    sudo: yes
+    notify: restart nginx
+
+  - name: create folder for SSL files
+    file: path=/etc/nginx/certs
+          state=directory
+          owner=www-data
+          group=www-data
+          mode=700
+    sudo: yes
+    notify: restart nginx
+
+  - name: add SSL files for bridgewalker
+    copy: src=files/etc/nginx/certs/$item
+          dest=/etc/nginx/certs/$item
+          owner=www-data
+          group=www-data
+    with_items:
+      - bridgewalker-unified.crt
+      - bridgewalker_encrypted.key
+      - NOTES
+    sudo: yes
+    notify: restart nginx
+    when_set: $is_production
+
+  - name: check whether the SSL key has been decrypted
+    file: path=/etc/nginx/certs/bridgewalker.key
+          state=file
+    sudo: yes
+    ignore_errors: True
+    register: ssl_key_decrypted
+    when_set: $is_production
+
+  - name: tell user to decrypt SSL key
+    pause: prompt="Please decrypt the SSL key in /etc/nginx/certs."
+    when: ssl_key_decrypted|failed
+    notify: restart nginx
+    # can only happen when $is_production is set
+
+  - name: ensure that the SSL key has been decrypted
+    file: path=/etc/nginx/certs/bridgewalker.key
+          state=file
+          owner=www-data
+          group=www-data
+          mode=600
+    sudo: yes
+    notify: restart nginx
+    when_set: $is_production
+
+  - name: create self-signed SSL cert
+    command: openssl req -new -nodes -x509 -subj "/CN=${bridgewalker_fqdn}"
+                -days 3650 -keyout /etc/nginx/certs/bridgewalker.key
+                -out /etc/nginx/certs/bridgewalker-unified.crt -extensions v3_ca
+                creates=/etc/nginx/certs/bridgewalker-unified.crt
+    sudo: yes
+    notify: restart nginx
+    when_set: $is_staging
+
+  - name: ensure that SSL cert is owned by www-data
+    file: path=$item
+          state=file
+          owner=www-data
+          group=www-data
+          mode=600
+    with_items:
+      - /etc/nginx/certs/bridgewalker-unified.crt
+      - /etc/nginx/certs/bridgewalker.key
+    sudo: yes
+    notify: restart nginx
+    when_set: $is_staging
+
+  - name: disable default nginx configuration
+    file: path=/etc/nginx/sites-enabled/default
+          state=absent
+    sudo: yes
+    notify: restart nginx
+
+  - name: enable nginx configuration for bridgewalker
+    file: src=/etc/nginx/sites-available/bridgewalker
+          dest=/etc/nginx/sites-enabled/bridgewalker
+          state=link
+    sudo: yes
+    notify: restart nginx
+
   - name: create database for Bridgewalker
     postgresql_db: name=bridgewalker
     sudo_user: postgres
@@ -122,6 +231,58 @@
     sudo_user: postgres
     sudo: yes
 
+  - name: create folder for metricsd
+    file: path=$home/metricsd
+          state=directory
+
+  - name: download metricsd
+    command: /usr/bin/wget https://github.com/downloads/mojodna/metricsd/metricsd-0.4.2-jar-with-dependencies.jar
+                -O $home/metricsd/metricsd-0.4.2-jar-with-dependencies.jar
+                creates=$home/metricsd/metricsd-0.4.2-jar-with-dependencies.jar
+    notify: restart metricsd
+
+  - name: add configuration for metricsd
+    copy: src=files/home/jan/metricsd/config.json
+          dest=/home/jan/metricsd/config.json
+    notify: restart metricsd
+
+  - name: add supervisor configuration for metricsd
+    copy: src=files/etc/supervisor/conf.d/metricsd.conf
+          dest=/etc/supervisor/conf.d/metricsd.conf
+          owner=root
+          group=root
+    sudo: yes
+    notify: update supervisor
+
+  - name: create folder for Bridgewalker configuration
+    file: path=$home/.bridgewalker
+          state=directory
+
+  - name: add Bridgewalker configuration
+    copy: src=files/home/jan/bridgewalker/$item
+          dest=/home/jan/.bridgewalker/$item
+    with_items:
+      - config_template
+      - workingfund
+    when_set: $is_production
+
+  - name: add Bridgewalker configuration (staging)
+    copy: src=files/home/jan/bridgewalker/${item}_staging
+          dest=/home/jan/.bridgewalker/$item
+    with_items:
+      - config
+      - workingfund
+    when_set: $is_staging
+
+  - name: add supervisor configuration for Bridgewalker
+    copy: src=files/etc/supervisor/conf.d/bridgewalker.conf
+          dest=/etc/supervisor/conf.d/bridgewalker.conf
+          owner=root
+          group=root
+    sudo: yes
+    notify: update supervisor
+    when_set: $is_production
+
   handlers:
   - name: update supervisor
     command: /usr/bin/supervisorctl update
@@ -131,6 +292,14 @@
     command: /usr/bin/supervisorctl restart mtgoxcachingproxy
     sudo: yes
 
+  - name: restart metricsd
+    command: /usr/bin/supervisorctl restart metricsd
+    sudo: yes
+
   - name: update aptitude
     command: /usr/bin/aptitude update
+    sudo: yes
+
+  - name: restart nginx
+    service: name=nginx state=restarted
     sudo: yes

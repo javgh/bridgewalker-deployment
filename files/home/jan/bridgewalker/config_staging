@@ -1,0 +1,19 @@
+mtgox_auth_key = 0be0c0b0-0f00-000d-a0de-00db0f0fc0af
+mtgox_auth_secret = A0seCE00EgkyUOliU0wokMuRwq/AbdpVMJ000kmDXtH0mWdy0QqsSKVkAer0AbfG0bYUO0YKVyh0ovO0pR0lag==
+key_set = 1
+rpcurl = http://127.0.0.1:8332
+rpcuser = rpcuser
+rpcpassword = localaccessonly
+safety_margin_btc = 0.02
+safety_margin_usd = 1.00
+typical_tx_fee = 0.0005
+maximum_order_btc = 0.1
+mtgox_minimum_order_btc = 0.01
+target_exchange_fee = 0.6
+bitcoind_notify_file = /home/jan/.bitcoin/notify.pid
+marker_addresses = [ ("1LNWw6yCxkUmkhArb2Nf2MPw6vG7u5WG7q", 10)
+                   , ("14Z1mazY4HfysZyMaKudFr63EwHqQT2njz", 2)
+                   , ("1MAbwuYp8CPChJ1ua25tnEKXkfXTVqEoyg", 10)
+                   , ("1MAxx46Dp3tFw933PxPwEYYGCpxYda2pyH", 10)
+                   ]
+stdout_logging = true
