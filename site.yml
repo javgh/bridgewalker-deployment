@@ -21,6 +21,7 @@
       - postgresql
       - python-psycopg2
       - haskell-platform
+      - rsync
       - libboost-system1.49.0               # \
       - libboost-filesystem1.49.0           # > for Bitcoin daemon
       - libboost-program-options1.49.0      # |
@@ -292,6 +293,32 @@
     notify: update supervisor
     when_set: $is_production
 
+  - name: create folders for Bridgewalker
+    file: path=$home/$item
+          state=directory
+    with_items:
+      - bridgewalker
+      - bridgewalker/log
+    when_set: $is_production
+
+  - name: copy Bridgewalker assets (snaplets)
+    local_action: command rsync -a
+                        ../bridgewalker/snaplets
+                        $bridgewalker_fqdn:$home/bridgewalker/snaplets
+    when_set: $is_production
+
+  - name: copy Bridgewalker assets (static)
+    local_action: command rsync -a
+                        ../bridgewalker/static
+                        $bridgewalker_fqdn:$home/bridgewalker/static
+    when_set: $is_production
+
+  - name: copy Bridgewalker binary
+    copy: src=../../../../.cabal/bin/bridgewalker
+          dest=$home/bridgewalker/bridgewalker
+    notify: restart bridgewalker
+    when_set: $is_production
+
   handlers:
   - name: update supervisor
     command: /usr/bin/supervisorctl update
@@ -299,6 +326,10 @@
 
   - name: restart mtgoxcachingproxy
     command: /usr/bin/supervisorctl restart mtgoxcachingproxy
+    sudo: yes
+
+  - name: restart bridgewalker
+    command: /usr/bin/supervisorctl restart bridgewalker
     sudo: yes
 
   - name: restart metricsd

@@ -1,3 +1,11 @@
+[bridgewalker]
+www.bridgewalkerapp.com
+
+[bridgewalker:vars]
+is_production=yes
+bridgewalker_fqdn=www.bridgewalkerapp.com
+update_cabal=no
+
 [graphite]
 www.bitcoinmonitor.com
 
