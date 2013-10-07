@@ -23,6 +23,8 @@
       - haskell-platform
       - rsync
       - backupninja
+      - python-paramiko
+      - librsync1                    # dependency for duplicity
       - libboost-system1.49.0               # \
       - libboost-filesystem1.49.0           # > for Bitcoin daemon
       - libboost-program-options1.49.0      # |
@@ -329,13 +331,13 @@
   - name: download newer version of duplicity  # need something like 0.6.21,
                                                # as older versions seem to
                                                # have buggy SSH support
-    command: /usr/bin/wget http://ftp.de.debian.org/debian/pool/main/d/duplicity/duplicity_0.6.22-1_i386.deb
-                -O /root/duplicity_0.6.22-1_i386.deb
-                creates=/root/duplicity_0.6.22-1_i386.deb
+    command: /usr/bin/wget http://ftp.de.debian.org/debian/pool/main/d/duplicity/duplicity_0.6.22-1_amd64.deb
+                -O /root/duplicity_0.6.22-1_amd64.deb
+                creates=/root/duplicity_0.6.22-1_amd64.deb
     sudo: yes
 
   - name: install newer version of duplicity
-    command: dpkg -i /root/duplicity_0.6.22-1_i386.deb
+    command: dpkg -i /root/duplicity_0.6.22-1_amd64.deb
              creates=/usr/bin/duplicity
     sudo: yes
 
@@ -417,7 +419,7 @@
     sudo: yes
     ignore_errors: True
     register: backup_ssh_key
-    #when_set: $is_production
+    when_set: $is_production
 
   - name: tell user to decrypt the backup ssh key
     pause: prompt="Please decrypt the file /root/.ssh/id_dsa.gpg (use backupninja passphrase)."
@@ -431,7 +433,7 @@
           group=root
           mode=600
     sudo: yes
-    #when_set: $is_production
+    when_set: $is_production
 
   handlers:
   - name: update supervisor

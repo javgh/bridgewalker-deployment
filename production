@@ -1,9 +1,11 @@
 [bridgewalker]
-www.bridgewalkerapp.com
+88.198.163.60
+#www.bridgewalkerapp.com
 
 [bridgewalker:vars]
 is_production=yes
-bridgewalker_fqdn=www.bridgewalkerapp.com
+bridgewalker_fqdn=88.198.163.60
+#bridgewalker_fqdn=www.bridgewalkerapp.com
 update_cabal=no
 
 [graphite]

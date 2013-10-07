@@ -9,4 +9,5 @@ Deploy to production environment
 Manual actions required on first deployment
   Decryption of sensitive files (will be prompted)
   Performing initial ssh login to bwbackup@<backuphost> as user root
+    via: backupninja -n -d
   Running './bridgewalker --initdb' to initialize the database
