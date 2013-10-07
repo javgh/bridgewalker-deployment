@@ -135,9 +135,13 @@
           group=root
           mode=644
     sudo: yes
-    notify: update aptitude
 
-# TODO: need to run 'aptitude update' right away, otherwise the next task will fail
+  - name: update aptitude   # need to run right away, otherwise the next
+                            # task will fail
+    shell: /usr/bin/aptitude update;
+            touch /root/.ansible_marker_backports_repository_included
+            creates=/root/.ansible_marker_backports_repository_included
+    sudo: yes
 
   - name: install backported nginx  # need at least 1.3.13 for websocket support
     apt: pkg=nginx default_release=wheezy-backports state=present
@@ -322,29 +326,17 @@
     notify: restart bridgewalker
     when_set: $is_production
 
-  - name: instruct apt to use packages from Debian Stable
-    copy: src=files/etc/apt/apt.conf.d/00stayonstable
-          dest=/etc/apt/apt.conf.d/00stayonstable
-          owner=root
-          group=root
-          mode=644
+  - name: download newer version of duplicity  # need something like 0.6.21,
+                                               # as older versions seem to
+                                               # have buggy SSH support
+    command: /usr/bin/wget http://ftp.de.debian.org/debian/pool/main/d/duplicity/duplicity_0.6.22-1_i386.deb
+                -O /root/duplicity_0.6.22-1_i386.deb
+                creates=/root/duplicity_0.6.22-1_i386.deb
     sudo: yes
 
-  - name: add Debian Jessie repository
-    copy: src=files/etc/apt/sources.list.d/jessie.list
-          dest=/etc/apt/sources.list.d/jessie.list
-          owner=root
-          group=root
-          mode=644
-    sudo: yes
-    notify: update aptitude
-
-# TODO: need to run 'aptitude update' right away, otherwise the next task will fail
-
-  - name: install duplicity from Debian Jessie   # need something like 0.6.21,
-                                                 # as older versions seem to
-                                                 # have buggy SSH support
-    apt: pkg=duplicity default_release=jessie state=present
+  - name: install newer version of duplicity
+    command: dpkg -i /root/duplicity_0.6.22-1_i386.deb
+             creates=/usr/bin/duplicity
     sudo: yes
 
   - name: add backupninja configuration
@@ -456,10 +448,6 @@
 
   - name: restart metricsd
     command: /usr/bin/supervisorctl restart metricsd
-    sudo: yes
-
-  - name: update aptitude
-    command: /usr/bin/aptitude update
     sudo: yes
 
   - name: restart nginx
