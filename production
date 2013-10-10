@@ -7,6 +7,7 @@ is_production=yes
 bridgewalker_fqdn=88.198.163.60
 #bridgewalker_fqdn=www.bridgewalkerapp.com
 update_cabal=no
+arch=amd64
 
 [graphite]
 www.bitcoinmonitor.com

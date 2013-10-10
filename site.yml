@@ -156,6 +156,16 @@
           group=root
     sudo: yes
     notify: restart nginx
+    when_set: $is_production
+
+  - name: add nginx configuration for bridgewalker (staging)
+    copy: src=files/etc/nginx/sites-available/bridgewalker_staging
+          dest=/etc/nginx/sites-available/bridgewalker
+          owner=root
+          group=root
+    sudo: yes
+    notify: restart nginx
+    when_set: $is_staging
 
   - name: create folder for SSL files
     file: path=/etc/nginx/certs
@@ -331,13 +341,13 @@
   - name: download newer version of duplicity  # need something like 0.6.21,
                                                # as older versions seem to
                                                # have buggy SSH support
-    command: /usr/bin/wget http://ftp.de.debian.org/debian/pool/main/d/duplicity/duplicity_0.6.22-1_amd64.deb
-                -O /root/duplicity_0.6.22-1_amd64.deb
-                creates=/root/duplicity_0.6.22-1_amd64.deb
+    command: /usr/bin/wget http://ftp.de.debian.org/debian/pool/main/d/duplicity/duplicity_0.6.22-1_$arch.deb
+                -O /root/duplicity_0.6.22-1_$arch.deb
+                creates=/root/duplicity_0.6.22-1_$arch.deb
     sudo: yes
 
   - name: install newer version of duplicity
-    command: dpkg -i /root/duplicity_0.6.22-1_amd64.deb
+    command: dpkg -i /root/duplicity_0.6.22-1_$arch.deb
              creates=/usr/bin/duplicity
     sudo: yes
 

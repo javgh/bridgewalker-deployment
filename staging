@@ -5,6 +5,7 @@
 is_staging=yes
 bridgewalker_fqdn=192.168.2.2
 update_cabal=no
+arch=i386
 
 [graphite]
 192.168.2.3
