@@ -13,3 +13,4 @@ Manual actions required on first deployment
     might have to run some commands (e.g. duplicity) manually once
   Running './bridgewalker --initdb' to initialize the database
   Create Bridgewalker configuration file
+  Update 'metricsd_host' and redeploy Graphite host
