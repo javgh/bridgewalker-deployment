@@ -10,4 +10,6 @@ Manual actions required on first deployment
   Decryption of sensitive files (will be prompted)
   Performing initial ssh login to bwbackup@<backuphost> as user root
     via: backupninja -n -d
+    might have to run some commands (e.g. duplicity) manually once
   Running './bridgewalker --initdb' to initialize the database
+  Create Bridgewalker configuration file

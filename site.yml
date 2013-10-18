@@ -24,6 +24,7 @@
       - rsync
       - backupninja
       - python-paramiko
+      - libcurl4-gnutls-dev
       - librsync1                    # dependency for duplicity
       - libboost-system1.49.0               # \
       - libboost-filesystem1.49.0           # > for Bitcoin daemon
@@ -154,6 +155,7 @@
           dest=/etc/nginx/sites-available/bridgewalker
           owner=root
           group=root
+          mode=600
     sudo: yes
     notify: restart nginx
     when_set: $is_production
@@ -163,6 +165,7 @@
           dest=/etc/nginx/sites-available/bridgewalker
           owner=root
           group=root
+          mode=600
     sudo: yes
     notify: restart nginx
     when_set: $is_staging
@@ -323,13 +326,13 @@
   - name: copy Bridgewalker assets (snaplets)
     local_action: command rsync -a
                         ../bridgewalker/snaplets
-                        $bridgewalker_fqdn:$home/bridgewalker/snaplets
+                        $bridgewalker_fqdn:$home/bridgewalker
     when_set: $is_production
 
   - name: copy Bridgewalker assets (static)
     local_action: command rsync -a
                         ../bridgewalker/static
-                        $bridgewalker_fqdn:$home/bridgewalker/static
+                        $bridgewalker_fqdn:$home/bridgewalker
     when_set: $is_production
 
   - name: copy Bridgewalker binary
