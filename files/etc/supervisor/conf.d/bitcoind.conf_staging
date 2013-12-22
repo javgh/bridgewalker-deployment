@@ -1,7 +1,7 @@
 [program:bitcoind]
 directory=/home/jan/bitcoind
 environment=HOME="/home/jan"
-command=/home/jan/bitcoind/bitcoind -listen=0 -txnotify=/home/jan/.bitcoin/notify.pid -blocknotify="/home/jan/.bitcoin/pidnotifier /home/jan/.bitcoin/notify.pid"
+command=/home/jan/bitcoind/bitcoind -listen=0 -walletnotify="/home/jan/.bitcoin/pidnotifier /home/jan/.bitcoin/notify.pid" -blocknotify="/home/jan/.bitcoin/pidnotifier /home/jan/.bitcoin/notify.pid"
 user=jan
 redirect_stderr=true
 autostart=false

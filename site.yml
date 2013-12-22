@@ -59,12 +59,12 @@
       - libghc-unordered-containers-dev
       - libghc-vector-dev
     sudo: yes
-    when_set: $is_staging
+    when: is_staging is defined
 
   - name: install additional Haskell development packages via Cabal
     shell: cabal update;
            cd /home/jan/src/watchdog; cabal install;
-           cd /home/jan/src/bitcoin-rpc2; cabal install;
+           cd /home/jan/src/bitcoin-rpc; cabal install;
            cd /home/jan/src/mtgoxapi; cabal install;
            cd /home/jan/src/metricsd-client; cabal install;
            cd /home/jan/src/bridgewalker; cabal install;
@@ -74,7 +74,7 @@
     file: src=$home/src/bridgewalker
           dest=$home/bridgewalker
           state=link
-    when_set: $is_staging
+    when: is_staging is defined
 
   - name: create folder for MtGoxCachingProxy
     file: path=$home/MtGoxCachingProxy
@@ -96,10 +96,12 @@
   - name: create Bitcoin daemon configuration directory
     file: path=$home/.bitcoin
           state=directory
+    when: is_production is defined
 
   - name: configure Bitcoin daemon
     copy: src=files/home/jan/bitcoin/bitcoin.conf
           dest=$home/.bitcoin/bitcoin.conf
+    when: is_production is defined
 
   - name: create folder for Bitcoin daemon
     file: path=$home/bitcoind
@@ -116,7 +118,7 @@
           group=root
     sudo: yes
     notify: update supervisor
-    when_set: $is_production
+    when: is_production is defined
 
   - name: add supervisor configuration for Bitcoin daemon (staging)
     copy: src=files/etc/supervisor/conf.d/bitcoind.conf_staging
@@ -125,11 +127,12 @@
           group=root
     sudo: yes
     notify: update supervisor
-    when_set: $is_staging
+    when: is_staging is defined
 
   - name: install pidnotifier
     copy: src=../../one-off/PidNotifier/PidNotifier
           dest=$home/.bitcoin/pidnotifier
+    when: is_production is defined
 
   - name: add Debian backports repository
     copy: src=files/etc/apt/sources.list.d/backports.list
@@ -158,7 +161,7 @@
           mode=600
     sudo: yes
     notify: restart nginx
-    when_set: $is_production
+    when: is_production is defined
 
   - name: add nginx configuration for bridgewalker (staging)
     copy: src=files/etc/nginx/sites-available/bridgewalker_staging
@@ -168,7 +171,7 @@
           mode=600
     sudo: yes
     notify: restart nginx
-    when_set: $is_staging
+    when: is_staging is defined
 
   - name: create folder for SSL files
     file: path=/etc/nginx/certs
@@ -190,7 +193,7 @@
       - NOTES
     sudo: yes
     notify: restart nginx
-    when_set: $is_production
+    when: is_production is defined
 
   - name: check whether the SSL key has been decrypted
     file: path=/etc/nginx/certs/bridgewalker.key
@@ -198,7 +201,7 @@
     sudo: yes
     ignore_errors: True
     register: ssl_key_decrypted
-    when_set: $is_production
+    when: is_production is defined
 
   - name: tell user to decrypt SSL key
     pause: prompt="Please decrypt the SSL key in /etc/nginx/certs."
@@ -214,7 +217,7 @@
           mode=600
     sudo: yes
     notify: restart nginx
-    when_set: $is_production
+    when: is_production is defined
 
   - name: create self-signed SSL cert
     command: openssl req -new -nodes -x509 -subj "/CN=${bridgewalker_fqdn}"
@@ -223,7 +226,7 @@
                 creates=/etc/nginx/certs/bridgewalker-unified.crt
     sudo: yes
     notify: restart nginx
-    when_set: $is_staging
+    when: is_staging is defined
 
   - name: ensure that SSL cert is owned by www-data
     file: path=$item
@@ -236,7 +239,7 @@
       - /etc/nginx/certs/bridgewalker.key
     sudo: yes
     notify: restart nginx
-    when_set: $is_staging
+    when: is_staging is defined
 
   - name: disable default nginx configuration
     file: path=/etc/nginx/sites-enabled/default
@@ -251,17 +254,19 @@
     sudo: yes
     notify: restart nginx
 
-  - name: create database for Bridgewalker
-    postgresql_db: name=bridgewalker
-    sudo_user: postgres
-    sudo: yes
+# TODO: sudo_user does not seem to work
 
-  - name: give user jan access to database
-    shell: /usr/bin/createuser --no-createdb --no-createrole --no-superuser jan;
-           touch /var/lib/postgresql/.ansible_marker_user_jan_created
-           creates=/var/lib/postgresql/.ansible_marker_user_jan_created
-    sudo_user: postgres
-    sudo: yes
+#  - name: create database for Bridgewalker
+#    postgresql_db: name=bridgewalker
+#    sudo_user: postgres
+#    sudo: yes
+
+#  - name: give user jan access to database
+#    shell: /usr/bin/createuser --no-createdb --no-createrole --no-superuser jan;
+#           touch /var/lib/postgresql/.ansible_marker_user_jan_created
+#           creates=/var/lib/postgresql/.ansible_marker_user_jan_created
+#    sudo_user: postgres
+#    sudo: yes
 
   - name: create folder for metricsd
     file: path=$home/metricsd
@@ -296,7 +301,7 @@
     with_items:
       - config_template
       - workingfund
-    when_set: $is_production
+    when: is_production is defined
 
   - name: add Bridgewalker configuration (staging)
     copy: src=files/home/jan/bridgewalker/${item}_staging
@@ -304,7 +309,7 @@
     with_items:
       - config
       - workingfund
-    when_set: $is_staging
+    when: is_staging is defined
 
   - name: add supervisor configuration for Bridgewalker
     copy: src=files/etc/supervisor/conf.d/bridgewalker.conf
@@ -313,7 +318,7 @@
           group=root
     sudo: yes
     notify: update supervisor
-    when_set: $is_production
+    when: is_production is defined
 
   - name: create folders for Bridgewalker
     file: path=$home/$item
@@ -321,25 +326,25 @@
     with_items:
       - bridgewalker
       - bridgewalker/log
-    when_set: $is_production
+    when: is_production is defined
 
   - name: copy Bridgewalker assets (snaplets)
     local_action: command rsync -a
                         ../bridgewalker/snaplets
                         $bridgewalker_fqdn:$home/bridgewalker
-    when_set: $is_production
+    when: is_production is defined
 
   - name: copy Bridgewalker assets (static)
     local_action: command rsync -a
                         ../bridgewalker/static
                         $bridgewalker_fqdn:$home/bridgewalker
-    when_set: $is_production
+    when: is_production is defined
 
   - name: copy Bridgewalker binary
     copy: src=../../../../.cabal/bin/bridgewalker
           dest=$home/bridgewalker/bridgewalker
     notify: restart bridgewalker
-    when_set: $is_production
+    when: is_production is defined
 
   - name: download newer version of duplicity  # need something like 0.6.21,
                                                # as older versions seem to
@@ -390,7 +395,7 @@
     sudo: yes
     ignore_errors: True
     register: backupninja_passphrase
-    when_set: $is_production
+    when: is_production is defined
 
   - name: tell user to configure the backupninja passphrase
     pause: prompt="Please create /etc/backup.d/90-off-site.dup and insert the backupninja passphrase."
@@ -404,7 +409,7 @@
           group=root
           mode=600
     sudo: yes
-    when_set: $is_production
+    when: is_production is defined
 
   - name: create folder for backup ssh keys
     file: path=/root/.ssh
@@ -432,7 +437,7 @@
     sudo: yes
     ignore_errors: True
     register: backup_ssh_key
-    when_set: $is_production
+    when: is_production is defined
 
   - name: tell user to decrypt the backup ssh key
     pause: prompt="Please decrypt the file /root/.ssh/id_dsa.gpg (use backupninja passphrase)."
@@ -446,7 +451,7 @@
           group=root
           mode=600
     sudo: yes
-    when_set: $is_production
+    when: is_production is defined
 
   handlers:
   - name: update supervisor
