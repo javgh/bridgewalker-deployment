@@ -54,6 +54,8 @@
       - libghc-random-dev
       - libghc-regex-compat-dev
       - libghc-sha-dev
+      - libghc-test-framework-hunit-dev
+      - libghc-test-framework-quickcheck2-dev
       - libghc-text-dev
       - libghc-transformers-dev
       - libghc-unordered-containers-dev
