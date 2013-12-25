@@ -256,19 +256,18 @@
     sudo: yes
     notify: restart nginx
 
-# TODO: sudo_user does not seem to work
+    # TODO: sudo_user does not seem to work when running against Vagrant VM
+  - name: create database for Bridgewalker
+    postgresql_db: name=bridgewalker
+    sudo_user: postgres
+    sudo: yes
 
-#  - name: create database for Bridgewalker
-#    postgresql_db: name=bridgewalker
-#    sudo_user: postgres
-#    sudo: yes
-
-#  - name: give user jan access to database
-#    shell: /usr/bin/createuser --no-createdb --no-createrole --no-superuser jan;
-#           touch /var/lib/postgresql/.ansible_marker_user_jan_created
-#           creates=/var/lib/postgresql/.ansible_marker_user_jan_created
-#    sudo_user: postgres
-#    sudo: yes
+  - name: give user jan access to database
+    shell: /usr/bin/createuser --no-createdb --no-createrole --no-superuser jan;
+           touch /var/lib/postgresql/.ansible_marker_user_jan_created
+           creates=/var/lib/postgresql/.ansible_marker_user_jan_created
+    sudo_user: postgres
+    sudo: yes
 
   - name: create folder for metricsd
     file: path=$home/metricsd
