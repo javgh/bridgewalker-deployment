@@ -7,9 +7,9 @@ rpcpassword = localaccessonly
 safety_margin_btc = 0.001
 safety_margin_usd = 1.00
 typical_tx_fee = 0.0001
-maximum_order_btc = 0.003
+maximum_order_btc = 0.01
 mtgox_minimum_order_btc = 0.01
-target_exchange_fee = 0.6
+target_exchange_fee = 0.4
 bitcoind_notify_file = /home/jan/.bitcoin/notify.pid
 marker_addresses = [ ("1LNWw6yCxkUmkhArb2Nf2MPw6vG7u5WG7q", 10)
                    , ("14Z1mazY4HfysZyMaKudFr63EwHqQT2njz", 2)
