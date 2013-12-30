@@ -112,6 +112,12 @@
   - name: install custom Bitcoin daemon
     copy: src=../../../../repos/bitcoin-bw-production/src/bitcoind
           dest=$home/bitcoind/bitcoind
+    when: is_production is defined
+
+  - name: install custom Bitcoin daemon (staging)
+    copy: src=../../../../repos/bitcoin-bw-staging/src/bitcoind
+          dest=$home/bitcoind/bitcoind
+    when: is_staging is defined
 
   - name: add supervisor configuration for Bitcoin daemon
     copy: src=files/etc/supervisor/conf.d/bitcoind.conf
@@ -261,6 +267,7 @@
     postgresql_db: name=bridgewalker
     sudo_user: postgres
     sudo: yes
+    when: is_production is defined
 
   - name: give user jan access to database
     shell: /usr/bin/createuser --no-createdb --no-createrole --no-superuser jan;
@@ -268,6 +275,7 @@
            creates=/var/lib/postgresql/.ansible_marker_user_jan_created
     sudo_user: postgres
     sudo: yes
+    when: is_production is defined
 
   - name: create folder for metricsd
     file: path=$home/metricsd
