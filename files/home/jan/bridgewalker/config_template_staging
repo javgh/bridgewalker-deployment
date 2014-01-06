@@ -1,5 +1,5 @@
-mtgox_auth_key = 0be0c0b0-0f00-000d-a0de-00db0f0fc0af
-mtgox_auth_secret = A0seCE00EgkyUOliU0wokMuRwq/AbdpVMJ000kmDXtH0mWdy0QqsSKVkAer0AbfG0bYUO0YKVyh0ovO0pR0lag==
+mtgox_auth_key =
+mtgox_auth_secret =
 key_set = 1
 rpcurl = http://127.0.0.1:8332
 rpcuser = rpcuser

@@ -316,7 +316,7 @@
     copy: src=files/home/jan/bridgewalker/${item}_staging
           dest=/home/jan/.bridgewalker/$item
     with_items:
-      - config
+      - config_template
       - workingfund
     when: is_staging is defined
 
